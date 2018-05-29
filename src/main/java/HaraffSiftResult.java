@@ -7,11 +7,6 @@ import java.util.Scanner;
 public class HaraffSiftResult {
     int propertiesCount;
     int interestPointsCount;
-    float x;
-    float y;
-    float a;
-    float b;
-    float c;
     List<InterestPoint> interestPoints = new ArrayList<InterestPoint>();
 
     private HaraffSiftResult() {
@@ -23,19 +18,20 @@ public class HaraffSiftResult {
         HaraffSiftResult result = new HaraffSiftResult();
         result.propertiesCount = sc.nextInt();
         result.interestPointsCount = sc.nextInt();
+        float x, y, a, b, c;
 
         for (int i = 0; i < result.interestPointsCount; i++) {
-            result.x = sc.nextFloat();
-            result.y = sc.nextFloat();
-            result.a = sc.nextFloat();
-            result.b = sc.nextFloat();
-            result.c = sc.nextFloat();
+            x = sc.nextFloat();
+            y = sc.nextFloat();
+            a = sc.nextFloat();
+            b = sc.nextFloat();
+            c = sc.nextFloat();
 
-            List<Integer> interestPoint = new ArrayList<Integer>();
+            List<Integer> properties = new ArrayList<Integer>();
             for (int j = 0; j < result.propertiesCount; j++) {
-                interestPoint.add(sc.nextInt());
+                properties.add(sc.nextInt());
             }
-            result.interestPoints.add(new InterestPoint(interestPoint));
+            result.interestPoints.add(new InterestPoint(properties, x, y, a, b, c));
         }
 
         return result;
@@ -46,17 +42,11 @@ public class HaraffSiftResult {
         return "HaraffSiftResult{" +
                 "propertiesCount=" + propertiesCount +
                 ", interestPointsCount=" + interestPointsCount +
-                ", x=" + x +
-                ", y=" + y +
-                ", a=" + a +
-                ", b=" + b +
-                ", c=" + c +
-                ", interestPoints=" + interestPoints +
+                ", interestPointsSize=" + interestPoints.size() +
                 '}';
     }
 
-
-    private int getNearestInterestPointIndex(InterestPoint interestPoint, List<InterestPoint> otherInterestPoints) {
+    private int getNearestInterestPointIndexBySameProperties(InterestPoint interestPoint, List<InterestPoint> otherInterestPoints) {
         int maxSimilarity = 0;
         int index = 0;
         for (int i = 0; i < otherInterestPoints.size(); i++) {
@@ -70,11 +60,25 @@ public class HaraffSiftResult {
         return index;
     }
 
-    //TODO get it from two images, then compare
+    //seems to be better
+    private int getNearestInterestPointIndexBySimilarProperties(InterestPoint interestPoint, List<InterestPoint> otherInterestPoints) {
+        long minDifference = Long.MAX_VALUE;
+        int index = 0;
+        for (int i = 0; i < otherInterestPoints.size(); i++) {
+            InterestPoint curr = otherInterestPoints.get(i);
+            int diff = curr.getPropertiesDifferenceSum(interestPoint);
+            if (diff < minDifference) {
+                minDifference = diff;
+                index = i;
+            }
+        }
+        return index;
+    }
+
     public List<OrderedInterestPoint> getOrderedInterestPoints(List<InterestPoint> otherInterestPoints) {
         List<OrderedInterestPoint> orderedInterestPoints = new ArrayList<OrderedInterestPoint>();
         for (InterestPoint curr : interestPoints) {
-            orderedInterestPoints.add(new OrderedInterestPoint(curr, getNearestInterestPointIndex(curr, otherInterestPoints)));
+            orderedInterestPoints.add(new OrderedInterestPoint(curr, getNearestInterestPointIndexBySimilarProperties(curr, otherInterestPoints)));
         }
         return orderedInterestPoints;
     }

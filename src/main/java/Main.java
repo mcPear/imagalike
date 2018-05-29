@@ -1,17 +1,43 @@
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 public class Main {
+
     public static void main(String... args) throws FileNotFoundException {
         String dirPath = "/home/maciej/Programs/extract_features";
-        String imageFileName = "image.png";
-        String haraffSiftFileName = "image.png.haraff.sift";
-        String haraffSiftFilePath = dirPath + "/" + haraffSiftFileName;
+        String image1FileName = "a1.png";
+        String image2FileName = "a1small.png";
+        String image1Path = dirPath + "/" + image1FileName;
+        String image2Path = dirPath + "/" + image2FileName;
+        String haraffSiftSuffix = ".haraff.sift";
+        String haraffSiftFile1Name = image1FileName + haraffSiftSuffix;
+        String haraffSiftFile2Name = image2FileName + haraffSiftSuffix;
+        String haraffSiftFile1Path = dirPath + "/" + haraffSiftFile1Name;
+        String haraffSiftFile2Path = dirPath + "/" + haraffSiftFile2Name;
 
-        createInterestPointsFile(dirPath, imageFileName);
-        System.out.println(HaraffSiftResult.loadFromFile(haraffSiftFilePath));
+        Window window = new Window(image1Path, image2Path);
+        window.setVisible(true);
+
+        createInterestPointsFile(dirPath, image1FileName);
+        createInterestPointsFile(dirPath, image2FileName);
+        System.out.println("Log: Files created");
+        HaraffSiftResult haraffSiftResult1 = HaraffSiftResult.loadFromFile(haraffSiftFile1Path);
+        HaraffSiftResult haraffSiftResult2 = HaraffSiftResult.loadFromFile(haraffSiftFile2Path);
+        Store.haraffSiftResult1 = haraffSiftResult1;
+        Store.haraffSiftResult2 = haraffSiftResult2;
+        window.paintImmediately();
+        System.out.println("Log: Files loaded to memory");
+        System.out.println("Log: image2 interestsPointsCount: " + haraffSiftResult2.interestPointsCount + " " + haraffSiftResult2.interestPoints.size());
+
+        List<InterestPointsPair> interestPointsPairs = InterestPointPairsFinder.getInterestPointsPairs(haraffSiftResult1, haraffSiftResult2);
+        Store.interestPointsPairs = InterestPointPairsFinder.getCohesiveInterestPointsPairs(interestPointsPairs, 20, 0.5);
+        List<InterestPointsPair> log = Store.interestPointsPairs;
+        System.out.println("Log: Pairs found");
+        window.paintImmediately();
     }
 
     static boolean createInterestPointsFile(String dirPath, String filename) {
