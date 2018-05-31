@@ -1,4 +1,6 @@
 
+import org.apache.commons.math3.linear.RealMatrix;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,6 +10,8 @@ import java.util.List;
 public class Main {
 
     public static void main(String... args) throws FileNotFoundException {
+        System.out.println(Math.pow(2, -1));
+
         String dirPath = "/home/maciej/Programs/extract_features";
         String image1FileName = "a1.png";
         String image2FileName = "a1small.png";
@@ -34,10 +38,12 @@ public class Main {
         System.out.println("Log: image2 interestsPointsCount: " + haraffSiftResult2.interestPointsCount + " " + haraffSiftResult2.interestPoints.size());
 
         List<InterestPointsPair> interestPointsPairs = InterestPointPairsFinder.getInterestPointsPairs(haraffSiftResult1, haraffSiftResult2);
-        Store.interestPointsPairs = InterestPointPairsFinder.getCohesiveInterestPointsPairs(interestPointsPairs, 20, 0.5);
-        List<InterestPointsPair> log = Store.interestPointsPairs;
+        List<InterestPointsPair> cohesiveInterestPointsPairs = InterestPointPairsFinder.getCohesiveInterestPointsPairs(interestPointsPairs, 20, 0.5);
+        Store.interestPointsPairs = cohesiveInterestPointsPairs;
         System.out.println("Log: Pairs found");
         window.paintImmediately();
+        RealMatrix model = Ransac.getAffineModel(cohesiveInterestPointsPairs.subList(0, 3));
+        System.out.println(model);
     }
 
     static boolean createInterestPointsFile(String dirPath, String filename) {
