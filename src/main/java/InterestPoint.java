@@ -14,7 +14,6 @@ public class InterestPoint {
         this.c = c;
     }
 
-    //TODO ogarnać czy liczyć różnicę czy liczbę takich samych
     public int getSamePropertiesCount(InterestPoint other) {
         if (this.properties.size() != other.properties.size()) {
             throw new IllegalArgumentException("Properties count differs");

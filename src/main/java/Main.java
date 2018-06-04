@@ -1,6 +1,4 @@
 
-import org.apache.commons.math3.linear.RealMatrix;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,8 +8,6 @@ import java.util.List;
 public class Main {
 
     public static void main(String... args) throws FileNotFoundException {
-        System.out.println(Math.pow(2, -1));
-
         String dirPath = "/home/maciej/Programs/extract_features";
         String image1FileName = "a1.png";
         String image2FileName = "a1small.png";
@@ -38,12 +34,19 @@ public class Main {
         System.out.println("Log: image2 interestsPointsCount: " + haraffSiftResult2.interestPointsCount + " " + haraffSiftResult2.interestPoints.size());
 
         List<InterestPointsPair> interestPointsPairs = InterestPointPairsFinder.getInterestPointsPairs(haraffSiftResult1, haraffSiftResult2);
-        List<InterestPointsPair> cohesiveInterestPointsPairs = InterestPointPairsFinder.getCohesiveInterestPointsPairs(interestPointsPairs, 20, 0.5);
-        Store.interestPointsPairs = cohesiveInterestPointsPairs;
-        System.out.println("Log: Pairs found");
+        Store.interestPointsPairs = interestPointsPairs;
         window.paintImmediately();
-        RealMatrix model = Ransac.getAffineModel(cohesiveInterestPointsPairs.subList(0, 3));
-        System.out.println(model);
+        System.out.println("Log: Interest point pairs found");
+        List<InterestPointsPair> cohesiveInterestPointsPairs = InterestPointPairsFinder.getCohesiveInterestPointsPairs(interestPointsPairs, 20, 0.5);
+        Store.cohesiveInterestPointsPairs = cohesiveInterestPointsPairs;
+        System.out.println("Log: Cohesive pairs found");
+        window.paintImmediately();
+        List<InterestPointsPair> bestModelFittedPairs = Ransac.getBestModelFittedPairs(interestPointsPairs, 1000, 10);
+        Store.bestModelFittedInterestPointsPairs = bestModelFittedPairs;
+        System.out.println("Log: The best model found");
+        System.out.println("Log: Count of fitted pairs: " + bestModelFittedPairs.size());
+        window.paintImmediately();
+        //TODO second transform, heuristic and better images
     }
 
     static boolean createInterestPointsFile(String dirPath, String filename) {
