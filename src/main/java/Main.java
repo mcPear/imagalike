@@ -41,7 +41,7 @@ public class Main {
         Store.cohesiveInterestPointsPairs = cohesiveInterestPointsPairs;
         System.out.println("Log: Cohesive pairs found");
         window.paintImmediately();
-        List<InterestPointsPair> bestModelFittedPairs = Ransac.getBestModelFittedPairs(interestPointsPairs, 1000, 10);
+        List<InterestPointsPair> bestModelFittedPairs = Ransac.getBestModelFittedPairs(interestPointsPairs, 10000, 10);
         Store.bestModelFittedInterestPointsPairs = bestModelFittedPairs;
         System.out.println("Log: The best model found");
         System.out.println("Log: Count of fitted pairs: " + bestModelFittedPairs.size());
