@@ -9,8 +9,8 @@ public class Main {
 
     public static void main(String... args) throws FileNotFoundException {
         String dirPath = "/home/maciej/Programs/extract_features";
-        String image1FileName = "a1.png";
-        String image2FileName = "a1small.png";
+        String image1FileName = "g1.png";
+        String image2FileName = "g2.png";
         String image1Path = dirPath + "/" + image1FileName;
         String image2Path = dirPath + "/" + image2FileName;
         String haraffSiftSuffix = ".haraff.sift";
@@ -37,11 +37,11 @@ public class Main {
         Store.interestPointsPairs = interestPointsPairs;
         window.paintImmediately();
         System.out.println("Log: Interest point pairs found");
-        List<InterestPointsPair> cohesiveInterestPointsPairs = InterestPointPairsFinder.getCohesiveInterestPointsPairs(interestPointsPairs, 20, 0.5);
+        List<InterestPointsPair> cohesiveInterestPointsPairs = InterestPointPairsFinder.getCohesiveInterestPointsPairs(interestPointsPairs, 20, 0.4);
         Store.cohesiveInterestPointsPairs = cohesiveInterestPointsPairs;
         System.out.println("Log: Cohesive pairs found");
         window.paintImmediately();
-        List<InterestPointsPair> bestModelFittedPairs = Ransac.getBestModelFittedPairs(interestPointsPairs, 10000, 10);
+        List<InterestPointsPair> bestModelFittedPairs = Ransac.getBestModelFittedPairs(interestPointsPairs, 10000, 30);
         Store.bestModelFittedInterestPointsPairs = bestModelFittedPairs;
         System.out.println("Log: The best model found");
         System.out.println("Log: Count of fitted pairs: " + bestModelFittedPairs.size());

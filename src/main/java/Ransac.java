@@ -123,14 +123,92 @@ public class Ransac {
 
     private static List<InterestPointsPair> getAffineSample(List<InterestPointsPair> allPairs) {
         int sampleStrength = 3;
-        Collections.shuffle(allPairs, new Random(System.currentTimeMillis()));
-        return allPairs.subList(0, sampleStrength);
+        List<InterestPointsPair> sample = null;
+        do {
+            Collections.shuffle(allPairs, new Random(System.currentTimeMillis()));
+            sample = allPairs.subList(0, sampleStrength);
+            System.out.println("Wrong sample occured");
+        } while (!isAffineSampleValid(sample, 6, 200));
+        return sample;
+    }
+
+    private static boolean isAffineSampleValid(List<InterestPointsPair> sample, double r, double R) {
+        double x1 = sample.get(0).interestPoint1.x;
+        double x2 = sample.get(1).interestPoint1.x;
+        double x3 = sample.get(2).interestPoint1.x;
+
+        double y1 = sample.get(0).interestPoint1.y;
+        double y2 = sample.get(1).interestPoint1.y;
+        double y3 = sample.get(2).interestPoint1.y;
+
+        double u1 = sample.get(0).interestPoint2.x;
+        double u2 = sample.get(1).interestPoint2.x;
+        double u3 = sample.get(2).interestPoint2.x;
+
+        double v1 = sample.get(0).interestPoint2.y;
+        double v2 = sample.get(1).interestPoint2.y;
+        double v3 = sample.get(2).interestPoint2.y;
+
+        double XYDistance12 = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        double XYDistance23 = Math.sqrt(Math.pow(x2 - x3, 2) + Math.pow(y2 - y3, 2));
+        double XYDistance13 = Math.sqrt(Math.pow(x1 - x3, 2) + Math.pow(y1 - y3, 2));
+        double UVDistance12 = Math.sqrt(Math.pow(u1 - u2, 2) + Math.pow(v1 - v2, 2));
+        double UVDistance23 = Math.sqrt(Math.pow(u2 - u3, 2) + Math.pow(v2 - v3, 2));
+        double UVDistance13 = Math.sqrt(Math.pow(u1 - u3, 2) + Math.pow(v1 - v3, 2));
+
+        return XYDistance12 > r && XYDistance23 > r && XYDistance13 > r && UVDistance12 > r && UVDistance13 > r && UVDistance23 > r &&
+                XYDistance12 < R && XYDistance23 < R && XYDistance13 < R && UVDistance12 < R && UVDistance13 < R && UVDistance23 < R;
     }
 
     private static List<InterestPointsPair> getPerspectiveSample(List<InterestPointsPair> allPairs) {
         int sampleStrength = 4;
-        Collections.shuffle(allPairs, new Random(System.currentTimeMillis()));
-        return allPairs.subList(0, sampleStrength);
+        List<InterestPointsPair> sample = null;
+        do {
+            Collections.shuffle(allPairs, new Random(System.currentTimeMillis()));
+            sample = allPairs.subList(0, sampleStrength);
+            System.out.println("Wrong sample occured");
+        } while (!isPerspectiveSampleValid(sample, 6, 200));
+        return sample;
+    }
+
+    private static boolean isPerspectiveSampleValid(List<InterestPointsPair> sample, double r, double R) {
+        double x1 = sample.get(0).interestPoint1.x;
+        double x2 = sample.get(1).interestPoint1.x;
+        double x3 = sample.get(2).interestPoint1.x;
+        double x4 = sample.get(3).interestPoint1.x;
+
+        double y1 = sample.get(0).interestPoint1.y;
+        double y2 = sample.get(1).interestPoint1.y;
+        double y3 = sample.get(2).interestPoint1.y;
+        double y4 = sample.get(3).interestPoint1.y;
+
+        double u1 = sample.get(0).interestPoint2.x;
+        double u2 = sample.get(1).interestPoint2.x;
+        double u3 = sample.get(2).interestPoint2.x;
+        double u4 = sample.get(3).interestPoint2.x;
+
+        double v1 = sample.get(0).interestPoint2.y;
+        double v2 = sample.get(1).interestPoint2.y;
+        double v3 = sample.get(2).interestPoint2.y;
+        double v4 = sample.get(3).interestPoint2.y;
+
+        double XYDistance12 = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        double XYDistance23 = Math.sqrt(Math.pow(x2 - x3, 2) + Math.pow(y2 - y3, 2));
+        double XYDistance13 = Math.sqrt(Math.pow(x1 - x3, 2) + Math.pow(y1 - y3, 2));
+        double XYDistance14 = Math.sqrt(Math.pow(x1 - x4, 2) + Math.pow(y1 - y4, 2));
+        double XYDistance24 = Math.sqrt(Math.pow(x2 - x4, 2) + Math.pow(y2 - y4, 2));
+        double XYDistance34 = Math.sqrt(Math.pow(x3 - x4, 2) + Math.pow(y3 - y4, 2));
+        double UVDistance12 = Math.sqrt(Math.pow(u1 - u2, 2) + Math.pow(v1 - v2, 2));
+        double UVDistance23 = Math.sqrt(Math.pow(u2 - u3, 2) + Math.pow(v2 - v3, 2));
+        double UVDistance13 = Math.sqrt(Math.pow(u1 - u3, 2) + Math.pow(v1 - v3, 2));
+        double UVDistance14 = Math.sqrt(Math.pow(u1 - u4, 2) + Math.pow(v1 - v4, 2));
+        double UVDistance24 = Math.sqrt(Math.pow(u2 - u4, 2) + Math.pow(v2 - v4, 2));
+        double UVDistance34 = Math.sqrt(Math.pow(u3 - u4, 2) + Math.pow(v3 - v4, 2));
+
+        return XYDistance12 > r && XYDistance23 > r && XYDistance13 > r && UVDistance12 > r && UVDistance13 > r
+                && UVDistance23 > r && XYDistance14 > r && XYDistance24 > r && XYDistance34 > r &&
+                XYDistance12 < R && XYDistance23 < R && XYDistance13 < R && UVDistance12 < R && UVDistance13 < R && UVDistance23 < R
+                && UVDistance14 < R && UVDistance24 < R && UVDistance34 < R;
     }
 
     private static RealMatrix getPerspectiveArgumentsUVMatrix(List<InterestPointsPair> sample) {

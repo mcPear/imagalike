@@ -8,6 +8,9 @@ import java.io.IOException;
 public class Canvas extends JPanel {
     private final String image1Path;
     private final String image2Path;
+    private boolean drawPairs = false;
+    private boolean drawCohesivePairs = false;
+    private boolean drawModelFittedPairs = true;
 
     public Canvas(String image1Path, String image2Path) {
         super();
@@ -30,15 +33,15 @@ public class Canvas extends JPanel {
         Image image2 = ImageIO.read(new File(image2Path));
         graphics2D.drawImage(image1, 0, 0, null);
         graphics2D.drawImage(image2, 800, 0, null);
-        if (Store.interestPointsPairs != null) {
+        if (Store.interestPointsPairs != null && drawPairs) {
             graphics2D.setColor(Color.GREEN);
             for (InterestPointsPair pair : Store.interestPointsPairs) {
                 graphics2D.drawLine(Math.round(pair.interestPoint1.x), Math.round(pair.interestPoint1.y),
                         Math.round(pair.interestPoint2.x) + 800, Math.round(pair.interestPoint2.y));
             }
         }
-        if (Store.cohesiveInterestPointsPairs != null) {
-            graphics2D.setColor(Color.YELLOW);
+        if (Store.cohesiveInterestPointsPairs != null && drawCohesivePairs) {
+            graphics2D.setColor(Color.BLUE);
             for (InterestPointsPair pair : Store.cohesiveInterestPointsPairs) {
                 graphics2D.drawLine(Math.round(pair.interestPoint1.x), Math.round(pair.interestPoint1.y),
                         Math.round(pair.interestPoint2.x) + 800, Math.round(pair.interestPoint2.y));
@@ -53,7 +56,7 @@ public class Canvas extends JPanel {
                 graphics2D.fillOval(Math.round(interestPoint.x) + 800, Math.round(interestPoint.y), 4, 4);
             }
         }
-        if (Store.bestModelFittedInterestPointsPairs != null) {
+        if (Store.bestModelFittedInterestPointsPairs != null && drawModelFittedPairs) {
             graphics2D.setColor(Color.RED);
             for (InterestPointsPair pair : Store.bestModelFittedInterestPointsPairs) {
                 graphics2D.drawLine(Math.round(pair.interestPoint1.x), Math.round(pair.interestPoint1.y),
