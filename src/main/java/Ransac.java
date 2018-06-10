@@ -12,39 +12,48 @@ public class Ransac {
 
     private static RealMatrix matrixArgs = MatrixUtils.createRealMatrix(6, 6);
     private static RealMatrix matrixResults = MatrixUtils.createRealMatrix(6, 1);
+    private static double[] argsXYHelperInitialArray = {0, 0, 0};
+    private static RealMatrix argsXYHelper = MatrixUtils.createColumnRealMatrix(argsXYHelperInitialArray);
+    private static RealMatrix model = MatrixUtils.createRealMatrix(3, 3);
+    private static RealMatrix affineMatrixArgsUV = MatrixUtils.createRealMatrix(6, 1);
+    private static RealMatrix affineMatrixArgsXY = MatrixUtils.createRealMatrix(6, 6);
+    private static RealMatrix perspectiveMatrixArgsUV = MatrixUtils.createRealMatrix(8, 1);
+    private static RealMatrix perspectiveMatrixArgsXY = MatrixUtils.createRealMatrix(8, 8);
 
     public static List<InterestPointsPair> getBestModelFittedPairs(List<InterestPointsPair> interestPointsPairs, int iterationsCount, int maxError) {//int sampleStrength
         String bestModelName = null;
         String modelName = null;
+        boolean modelFound = false;
         int bestScore = 0;
-        RealMatrix model;
         List<InterestPointsPair> sample;
         List<InterestPointsPair> modelFittedPairs = new ArrayList<InterestPointsPair>();
         List<InterestPointsPair> bestModelFittedPairs = null;
+        int switchTransformTreshold = iterationsCount / 2;
         for (int i = 0; i < iterationsCount; i++) {
-            model = null;
-            while (model == null) {
+            modelFound = false;
+            while (!modelFound) {
                 try {
-                    if (i < iterationsCount / 2) {
+                    if (i < switchTransformTreshold) {
                         sample = getAffineSample(interestPointsPairs);
-                        model = getAffineModel(sample);
+                        setAffineModel(sample);
                         modelName = "affine transform";
                     } else {
                         sample = getPerspectiveSample(interestPointsPairs);
-                        model = getPerspectiveModel(sample);
+                        setPerspectiveModel(sample);
                         modelName = "perspective transform";
                     }
+                    modelFound = true;
                 } catch (SingularMatrixException e) {
-                    System.out.println("Singular matrix occured.");
+//                    System.out.println("Singular matrix occured.");
                 }
             }
-            System.out.println(model);
+//            System.out.println(model);
             modelFittedPairs.clear();
             int score = 0;
             double error;
             for (InterestPointsPair currentPair : interestPointsPairs) {
-                error = getError(model, currentPair);
-                System.out.println("Error: " + error);
+                error = getError(currentPair);
+//                System.out.println("Error: " + error);
                 if (error < maxError) {
                     score++;
                     modelFittedPairs.add(currentPair);
@@ -55,37 +64,32 @@ public class Ransac {
                 bestModelName = modelName;
                 bestModelFittedPairs = new ArrayList<InterestPointsPair>(modelFittedPairs);
             }
-            System.out.println("End of iteration: " + i);
+//            System.out.println("End of iteration: " + i);
         }
         System.out.println("The best model name: " + bestModelName);
         return bestModelFittedPairs;
     }
 
-    public static RealMatrix getAffineModel(List<InterestPointsPair> sample) {
-        RealMatrix matrixArgsXY = getAffineArgumentsXYMatrix(sample);
-        RealMatrix matrixArgsUV = getAffineArgumentsUVMatrix(sample);
-        System.out.println(matrixArgsXY);
-        double[] affineVector = MatrixUtils.inverse(matrixArgsXY).multiply(matrixArgsUV).getColumn(0);
-        RealMatrix model = MatrixUtils.createRealMatrix(3, 3);
+    public static void setAffineModel(List<InterestPointsPair> sample) {
+        setAffineArgumentsUVMatrix(sample);
+        setAffineArgumentsXYMatrix(sample);
+//        System.out.println(matrixArgsXY);
+        double[] affineVector = MatrixUtils.inverse(affineMatrixArgsXY).multiply(affineMatrixArgsUV).getColumn(0);
         double[] row1 = {affineVector[0], affineVector[1], affineVector[2]};
         double[] row2 = {affineVector[3], affineVector[4], affineVector[5]};
         double[] row3 = {0, 0, 1};
         model.setRow(0, row1);
         model.setRow(1, row2);
         model.setRow(2, row3);
-        return model;
     }
 
-    private static RealMatrix getAffineArgumentsUVMatrix(List<InterestPointsPair> sample) {
-        RealMatrix matrixArgsUV = MatrixUtils.createRealMatrix(6, 1);
+    private static void setAffineArgumentsUVMatrix(List<InterestPointsPair> sample) {
         double[] matrixResultsArray = {sample.get(0).interestPoint2.x, sample.get(1).interestPoint2.x, sample.get(2).interestPoint2.x,
                 sample.get(0).interestPoint2.y, sample.get(1).interestPoint2.y, sample.get(2).interestPoint2.y};
-        matrixArgsUV.setColumn(0, matrixResultsArray);
-        return matrixArgsUV;
+        affineMatrixArgsUV.setColumn(0, matrixResultsArray);
     }
 
-    private static RealMatrix getAffineArgumentsXYMatrix(List<InterestPointsPair> sample) {
-        RealMatrix matrixArgsXY = MatrixUtils.createRealMatrix(6, 6);
+    private static void setAffineArgumentsXYMatrix(List<InterestPointsPair> sample) {
         double[] matrixArgsColumn1 = {sample.get(0).interestPoint1.x, sample.get(1).interestPoint1.x, sample.get(2).interestPoint1.x,
                 0, 0, 0};
         double[] matrixArgsColumn2 = {sample.get(0).interestPoint1.y, sample.get(1).interestPoint1.y, sample.get(2).interestPoint1.y,
@@ -96,39 +100,41 @@ public class Ransac {
         double[] matrixArgsColumn5 = {0, 0, 0,
                 sample.get(0).interestPoint1.y, sample.get(1).interestPoint1.y, sample.get(2).interestPoint1.y};
         double[] matrixArgsColumn6 = {0, 0, 0, 1, 1, 1};
-        matrixArgsXY.setColumn(0, matrixArgsColumn1);
-        matrixArgsXY.setColumn(1, matrixArgsColumn2);
-        matrixArgsXY.setColumn(2, matrixArgsColumn3);
-        matrixArgsXY.setColumn(3, matrixArgsColumn4);
-        matrixArgsXY.setColumn(4, matrixArgsColumn5);
-        matrixArgsXY.setColumn(5, matrixArgsColumn6);
-        return matrixArgsXY;
+        affineMatrixArgsXY.setColumn(0, matrixArgsColumn1);
+        affineMatrixArgsXY.setColumn(1, matrixArgsColumn2);
+        affineMatrixArgsXY.setColumn(2, matrixArgsColumn3);
+        affineMatrixArgsXY.setColumn(3, matrixArgsColumn4);
+        affineMatrixArgsXY.setColumn(4, matrixArgsColumn5);
+        affineMatrixArgsXY.setColumn(5, matrixArgsColumn6);
     }
 
-    public static RealMatrix getPerspectiveModel(List<InterestPointsPair> sample) {
-        RealMatrix matrixArgsXY = getPerspectiveArgumentsXYMatrix(sample);
-        RealMatrix matrixArgsUV = getPerspectiveArgumentsUVMatrix(sample);
-        System.out.println(matrixArgsXY);
-        double[] affineVector = MatrixUtils.inverse(matrixArgsXY).multiply(matrixArgsUV).getColumn(0);
-        RealMatrix model = MatrixUtils.createRealMatrix(3, 3);
+    public static void setPerspectiveModel(List<InterestPointsPair> sample) {
+        setPerspectiveArgumentsXYMatrix(sample);
+        setPerspectiveArgumentsUVMatrix(sample);
+//        System.out.println(matrixArgsXY);
+        double[] affineVector = MatrixUtils.inverse(perspectiveMatrixArgsXY).multiply(perspectiveMatrixArgsUV).getColumn(0);
         double[] row1 = {affineVector[0], affineVector[1], affineVector[2]};
         double[] row2 = {affineVector[3], affineVector[4], affineVector[5]};
         double[] row3 = {affineVector[6], affineVector[7], 1};
         model.setRow(0, row1);
         model.setRow(1, row2);
         model.setRow(2, row3);
-        return model;
     }
 
 
     private static List<InterestPointsPair> getAffineSample(List<InterestPointsPair> allPairs) {
         int sampleStrength = 3;
         List<InterestPointsPair> sample = null;
+//        boolean wrongSampleOccured = false;
         do {
+//            if(wrongSampleOccured){
+//                System.out.println("Wrong sample occured");
+//            }
             Collections.shuffle(allPairs, new Random(System.currentTimeMillis()));
             sample = allPairs.subList(0, sampleStrength);
-            System.out.println("Wrong sample occured");
-        } while (!isAffineSampleValid(sample, 6, 200));
+//            System.out.println("Wrong sample occured");
+//        } while (!isAffineSampleValid(sample, 6, 200));
+        } while (false);
         return sample;
     }
 
@@ -163,11 +169,16 @@ public class Ransac {
     private static List<InterestPointsPair> getPerspectiveSample(List<InterestPointsPair> allPairs) {
         int sampleStrength = 4;
         List<InterestPointsPair> sample = null;
+//        boolean wrongSampleOccured = false;
         do {
+//            if(wrongSampleOccured){
+//                System.out.println("Wrong sample occured");
+//            }
             Collections.shuffle(allPairs, new Random(System.currentTimeMillis()));
             sample = allPairs.subList(0, sampleStrength);
-            System.out.println("Wrong sample occured");
-        } while (!isPerspectiveSampleValid(sample, 6, 200));
+//            wrongSampleOccured = true;
+//        } while (!isPerspectiveSampleValid(sample, 6, 200));
+        } while (false);
         return sample;
     }
 
@@ -211,16 +222,14 @@ public class Ransac {
                 && UVDistance14 < R && UVDistance24 < R && UVDistance34 < R;
     }
 
-    private static RealMatrix getPerspectiveArgumentsUVMatrix(List<InterestPointsPair> sample) {
-        RealMatrix matrixArgsUV = MatrixUtils.createRealMatrix(8, 1);
+    private static void setPerspectiveArgumentsUVMatrix(List<InterestPointsPair> sample) {
         double[] matrixResultsArray = {sample.get(0).interestPoint2.x, sample.get(1).interestPoint2.x,
                 sample.get(2).interestPoint2.x, sample.get(3).interestPoint2.x, sample.get(0).interestPoint2.y,
                 sample.get(1).interestPoint2.y, sample.get(2).interestPoint2.y, sample.get(3).interestPoint2.y};
-        matrixArgsUV.setColumn(0, matrixResultsArray);
-        return matrixArgsUV;
+        perspectiveMatrixArgsUV.setColumn(0, matrixResultsArray);
     }
 
-    private static RealMatrix getPerspectiveArgumentsXYMatrix(List<InterestPointsPair> sample) {
+    private static void setPerspectiveArgumentsXYMatrix(List<InterestPointsPair> sample) {
         double x1 = sample.get(0).interestPoint1.x;
         double x2 = sample.get(1).interestPoint1.x;
         double x3 = sample.get(2).interestPoint1.x;
@@ -241,7 +250,6 @@ public class Ransac {
         double v3 = sample.get(2).interestPoint2.y;
         double v4 = sample.get(3).interestPoint2.y;
 
-        RealMatrix matrixArgsXY = MatrixUtils.createRealMatrix(8, 8);
         double[] matrixArgsColumn1 = {x1, x2, x3, x4, 0, 0, 0, 0};
         double[] matrixArgsColumn2 = {y1, y2, y3, y4, 0, 0, 0, 0};
         double[] matrixArgsColumn3 = {1, 1, 1, 1, 0, 0, 0, 0};
@@ -250,21 +258,20 @@ public class Ransac {
         double[] matrixArgsColumn6 = {0, 0, 0, 0, 1, 1, 1, 1};
         double[] matrixArgsColumn7 = {-u1 * x1, -u2 * x2, -u3 * x3, -u4 * x4, -v1 * x1, -v2 * x2, -v3 * x3, -v4 * x4};
         double[] matrixArgsColumn8 = {-u1 * y1, -u2 * y2, -u3 * y3, -u4 * y4, -v1 * y1, -v2 * y2, -v3 * y3, -v4 * y4};
-        matrixArgsXY.setColumn(0, matrixArgsColumn1);
-        matrixArgsXY.setColumn(1, matrixArgsColumn2);
-        matrixArgsXY.setColumn(2, matrixArgsColumn3);
-        matrixArgsXY.setColumn(3, matrixArgsColumn4);
-        matrixArgsXY.setColumn(4, matrixArgsColumn5);
-        matrixArgsXY.setColumn(5, matrixArgsColumn6);
-        matrixArgsXY.setColumn(6, matrixArgsColumn7);
-        matrixArgsXY.setColumn(7, matrixArgsColumn8);
-        return matrixArgsXY;
+        perspectiveMatrixArgsXY.setColumn(0, matrixArgsColumn1);
+        perspectiveMatrixArgsXY.setColumn(1, matrixArgsColumn2);
+        perspectiveMatrixArgsXY.setColumn(2, matrixArgsColumn3);
+        perspectiveMatrixArgsXY.setColumn(3, matrixArgsColumn4);
+        perspectiveMatrixArgsXY.setColumn(4, matrixArgsColumn5);
+        perspectiveMatrixArgsXY.setColumn(5, matrixArgsColumn6);
+        perspectiveMatrixArgsXY.setColumn(6, matrixArgsColumn7);
+        perspectiveMatrixArgsXY.setColumn(7, matrixArgsColumn8);
     }
 
-    private static double getError(RealMatrix model, InterestPointsPair pair) {
+    private static double getError(InterestPointsPair pair) {
         double[] argsXYArr = {pair.interestPoint1.x, pair.interestPoint1.y, 1};
-        RealMatrix argsXY = MatrixUtils.createColumnRealMatrix(argsXYArr);
-        double[] result = model.multiply(argsXY).getColumn(0);
+        argsXYHelper.setColumn(0, argsXYArr);
+        double[] result = model.multiply(argsXYHelper).getColumn(0);
         return getDistance(result[0], result[1], pair);
     }
 

@@ -6,11 +6,19 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 public class Main {
+/*
+p - pokój
+y - yerba
+c- różne yerby
+g - gitara
+k - katedra (1/2/3)
+26s
+*/
 
     public static void main(String... args) throws FileNotFoundException {
         String dirPath = "/home/maciej/Programs/extract_features";
-        String image1FileName = "g1.png";
-        String image2FileName = "g2.png";
+        String image1FileName = "y1.png";
+        String image2FileName = "y2.png";
         String image1Path = dirPath + "/" + image1FileName;
         String image2Path = dirPath + "/" + image2FileName;
         String haraffSiftSuffix = ".haraff.sift";
@@ -41,7 +49,7 @@ public class Main {
         Store.cohesiveInterestPointsPairs = cohesiveInterestPointsPairs;
         System.out.println("Log: Cohesive pairs found");
         window.paintImmediately();
-        List<InterestPointsPair> bestModelFittedPairs = Ransac.getBestModelFittedPairs(interestPointsPairs, 10000, 30);
+        List<InterestPointsPair> bestModelFittedPairs = Ransac.getBestModelFittedPairs(interestPointsPairs, 100000, 20);
         Store.bestModelFittedInterestPointsPairs = bestModelFittedPairs;
         System.out.println("Log: The best model found");
         System.out.println("Log: Count of fitted pairs: " + bestModelFittedPairs.size());
